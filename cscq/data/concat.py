@@ -5,7 +5,7 @@ import os, requests
 @task()
 def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_web/sccsc_tasks'):
     """ 
-    ncrcat performs a system call to ncrcat. NCO netcdf toolsmust be install on the host operating system.
+    This task performs a system call to ncrcat. NCO netcdf tools must be install on the host operating system.
     Args: 
         parameter - CMIP5 ESGF Parameter (eg. "tas")
         domain - CMIP5 ESGF Domain (eg. "Amon" or "day")
