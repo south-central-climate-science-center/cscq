@@ -30,7 +30,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     filename=""
     for row in data['results']:
         filename=row['filename']
-        times.exend(row['time'].split('-'))
+        times.extend(row['time'].split('-'))
         files.append("%s/%s.%s" % (row['path'],row['filename'],'nc'))
     times.sort()
     filename="%s_%s-%s.nc" % ("".join(filename.split('_')[:-1]),times[0],times[-1])
