@@ -36,7 +36,10 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     filename="%s_%s-%s.nc" % ("".join(filename.split('_')[:-1]),times[0],times[-1])
     files.sort()
     #Concatenate file
-    call(['ncrcat','-O', "%s/%s" % (resultDir,filename)].extend(files))
+    cmd = ['ncrcat','-O', "%s/%s" % (resultDir,filename)]
+    cmd.extend(files)
+    print(cmd)
+    call(cmd)
     return "http://data.southcentralclimate.org/sccsc_tasks/%s/%s" % (task_id,"%s/%s" % (resultDir,filename))
 
 
