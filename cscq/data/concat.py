@@ -1,11 +1,12 @@
 from celery.task import task
 from subprocess import call
+from dockertask import docker_task
 import os, requests
 
 @task()
 def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_web/sccsc_tasks'):
     """ 
-    This task performs a system call to ncrcat. NCO netcdf tools must be install on the host operating system.
+    This task spins up a docker container. SSH key must be within celery worker.
     Args: 
         parameter - CMIP5 ESGF Parameter (eg. "tas")
         domain - CMIP5 ESGF Domain (eg. "Amon" or "day")
@@ -36,11 +37,19 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     filename="%s_%s-%s.nc" % ("".join(filename.split('_')[:-1]),times[0],times[-1])
     files.sort()
     #Concatenate file
-    cmd = ['ncrcat','-O', "%s/%s" % (resultDir,filename)]
-    cmd.extend(files)
-    print(cmd)
-    call(cmd)
-    return "http://data.southcentralclimate.org/sccsc_tasks/%s/%s" % (task_id,"%s/%s" % (resultDir,filename))
+    docker_opts = "-v /data:/data"
+    docker_cmd = "ncrcat %s %s" % (" ".join(files), "%s/%s" % (resultDir,filename))
+    try:
+        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd,id=task_id)
+        return "http://%s/sccsc_tasks/%s" % (result['host'],result['task_id'])
+    except:
+        raise
+
+    #cmd = ['ncrcat','-O', "%s/%s" % (resultDir,filename)]
+    #cmd.extend(files)
+    #print(cmd)
+    #call(cmd)
+    #return "http://data.southcentralclimate.org/sccsc_tasks/%s/%s" % (task_id,"%s/%s" % (resultDir,filename))
 
 
 
