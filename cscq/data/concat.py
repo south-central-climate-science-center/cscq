@@ -20,7 +20,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     resultDir = os.path.join(base_output, task_id,'cmip5')
     os.makedirs(resultDir)
     result={}
-    if isinstance(model,str):
+    if isinstance(model,basestring):
         model = [model]
     print model
     for mdl in model:
