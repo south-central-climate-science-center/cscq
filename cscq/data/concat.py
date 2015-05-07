@@ -17,7 +17,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     """    
     #Task ID and result directory 
     task_id = str(ncrcat.request.id)
-    resultDir = os.path.join(base_output, task_id,'/cmip5')
+    resultDir = os.path.join(base_output, task_id,'cmip5')
     os.makedirs(resultDir)
     result={}
     if isinstance(model,str):
