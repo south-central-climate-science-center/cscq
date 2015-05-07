@@ -11,7 +11,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
         parameter - CMIP5 ESGF Parameter (eg. "tas")
         domain - CMIP5 ESGF Domain (eg. "Amon" or "day")
         experiment - CMIP5 ESGF Experiment (eg. "historical")
-        model - CMIP5 ESGF Model (eg. "GFDL-CM3")
+        model - CMIP5 ESGF List of Models (eg. ["GFDL-CM3"])
         ensemble - CMIP5 ESGF Esemble (eg. "r1i1p1")
 
     """    
@@ -22,7 +22,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     result={}
     if isinstance(model,str):
         model = [model]
-
+    print model
     for mdl in model:
         #Make Model directory
         out_dir = "%s/%s/%s" % (resultDir,parameter,mdl)
