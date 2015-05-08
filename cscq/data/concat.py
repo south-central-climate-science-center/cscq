@@ -22,13 +22,19 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     result={}
     if isinstance(model,basestring):
         model = [model]
-    print model
+    
     for mdl in model:
         #Make Model directory
         out_dir = "%s/%s/%s" % (resultDir,parameter,mdl)
         os.makedirs(out_dir)
         #Get CMIP5 Metadata
-        files,times,outfile= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
+        if experiment =="historical":
+            files,times,outfile= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
+        else:   
+            files,times,outfile= get_cmip5_metadata(parameter,domain,"historical",mdl,ensemble)
+            files1,times1,outfile1= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
+            files.extend(files1)
+            outfile= "%s_%s-%s.nc" % ("_".join(outfile.split('_')[:-1]),times[0],times1[-1])
         #Concatenate CMIP5 file
         docker_opts = "-v /data:/data"
         docker_cmd = "ncrcat %s %s" % (" ".join(files), "%s/%s" % (out_dir,outfile))
