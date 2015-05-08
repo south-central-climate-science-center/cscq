@@ -27,22 +27,30 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
         #Make Model directory
         out_dir = "%s/%s/%s" % (resultDir,parameter,mdl)
         os.makedirs(out_dir)
-        #Get CMIP5 Metadata
-        if experiment =="historical":
-            files,times,outfile= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
-        else:   
-            files,times,outfile= get_cmip5_metadata(parameter,domain,"historical",mdl,ensemble)
-            files1,times1,outfile1= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
-            files.extend(files1)
-            outfile= "%s_%s-%s.nc" % ("_".join(outfile.split('_')[:-1]),times[0],times1[-1])
-        #Concatenate CMIP5 file
-        docker_opts = "-v /data:/data"
-        docker_cmd = "ncrcat %s %s" % (" ".join(files), "%s/%s" % (out_dir,outfile))
         try:
+            #Get CMIP5 Metadata
+            if experiment =="historical":
+                files,times,outfile= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
+            else:   
+                
+                files,times,outfile= get_cmip5_metadata(parameter,domain,"historical",mdl,ensemble)
+                files1,times1,outfile1= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
+                files.extend(files1)
+                outfile= "%s_%s-%s.nc" % ("_".join(outfile.split('_')[:-1]),times[0],times1[-1])
+        
+                    
+            #Concatenate CMIP5 file
+            docker_opts = "-v /data:/data"
+            docker_cmd = "ncrcat %s %s" % (" ".join(files), "%s/%s" % (out_dir,outfile))
+            #try:
             result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd,id=task_id)
-            #return "http://%s/sccsc_tasks/%s" % (result['host'],result['task_id'])
+                #return "http://%s/sccsc_tasks/%s" % (result['host'],result['task_id'])
+           # except:
+           #     raise
         except:
-            raise
+            e_file = open(out_dir + "/error.txt","w")
+            e_file.write("Error: during files collection. Make sure all files are available. Historical and Projection files")
+            e_file.close()
     return "http://%s/sccsc_tasks/%s" % (result['host'],result['task_id'])
 
 def get_cmip5_metadata(parameter,domain,experiment,model,ensemble):
