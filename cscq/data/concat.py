@@ -52,11 +52,16 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
                 #Splice file to the correct merge point.
                 if outfile and outfile1:
                     file3 = "%s/%s_%s-%s.nc" % (out_dir,"_".join(outfile1.split('_')[:-1]),"spliced",times1[-1])
-                    docker_cmd3 = "%s %s" % (merge_with_time(file1,file2),file3)
-                    result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd3,id=task_id)
+                    merge = merge_with_time(file1,file2)
                     file4 = "%s/%s_%s-%s.nc" % (out_dir,"_".join(outfile1.split('_')[:-1]),times[0],times1[-1])
-                    docker_cmd4 = "ncrcat %s %s %s" % (file1,file3,file4)
-                    result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd4,id=task_id)
+                    if merge:
+                        docker_cmd3 = "%s %s" % (merge ,file3)
+                        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd3,id=task_id)
+                        docker_cmd4 = "ncrcat %s %s %s" % (file1,file3,file4)
+                        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd4,id=task_id)
+                    else:
+                        docker_cmd4 = "ncrcat %s %s %s" % (file1,file2,file4)
+                        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd4,id=task_id)
         except Exception as inst:
             e_file = open(out_dir + "/error.txt","w")
             e_file.write("%s%s" % ("Error: during files collection. Please see below for error description.\n\n",str(inst)))
@@ -89,5 +94,8 @@ def merge_with_time(file1,file2):
     data1 = nc.Dataset(file1)
     data2 = nc.Dataset(file2)
     historical_endtime = data1.variables['time'][:][-1]
-    idxvalue = list(data2.variables['time'][:]).index(historical_endtime) + 1
-    return "ncea -F -d time,%d, %s"  % (idxvalue,files2) 
+    try:
+        idxvalue = list(data2.variables['time'][:]).index(historical_endtime) + 1
+        return "ncea -F -d time,%d, %s"  % (idxvalue,files2) 
+    except:
+        return None
