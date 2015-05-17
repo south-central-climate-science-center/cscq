@@ -66,6 +66,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
             e_file = open(out_dir + "/error.txt","w")
             e_file.write("%s%s" % ("Error: during files collection. Please see below for error description.\n\n",str(inst)))
             e_file.close()
+            raise
     return "http://%s/sccsc_tasks/%s" % (result['host'],result['task_id'])
 
 def get_cmip5_metadata(parameter,domain,experiment,model,ensemble):
