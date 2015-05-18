@@ -94,11 +94,12 @@ def get_cmip5_metadata(parameter,domain,experiment,model,ensemble):
 def merge_with_time(file1,file2):
     data1 = nc.Dataset(file1)
     data2 = nc.Dataset(file2)
+    #rcp_starttime = data2.variables['time'][:][0]
     historical_endtime = data1.variables['time'][:][-1]
     try:
         idxvalue=0
         for itm in list(data2.variables['time'][:]):
-            if itm > historical_endtime:
+            if float(itm) > float(historical_endtime):
                 break
             idxvalue += 1
         if idxvalue==0:
