@@ -96,7 +96,15 @@ def merge_with_time(file1,file2):
     data2 = nc.Dataset(file2)
     historical_endtime = data1.variables['time'][:][-1]
     try:
-        idxvalue = list(data2.variables['time'][:]).index(historical_endtime) + 1
-        return "ncea -F -d time,%d, %s"  % (idxvalue,file2) 
+        idxvalue=0
+        for itm in list(data2.variables['time'][:]):
+            if itm > historical_endtime:
+                break
+            idxvalue += 1
+        if idxvalue==0:
+            return None
+        return "ncea -F -d time,%d, %s"  % (idxvalue,file2)
+        #idxvalue = list(data2.variables['time'][:]).index(historical_endtime) + 1
+        #return "ncea -F -d time,%d, %s"  % (idxvalue,file2) 
     except:
         return None
