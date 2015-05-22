@@ -3,6 +3,7 @@ from subprocess import call
 from dockertask import docker_task
 import os, requests, zipfile
 import netCDF4 as nc
+from os.path import basename
 @task()
 def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_web/sccsc_tasks'):
     """ 
@@ -117,4 +118,4 @@ def zipdir(path, ziph):
     # ziph is zipfile handle
     for root, dirs, files in os.walk(path):
         for file in files:
-            ziph.write(os.path.join(root, file))
+            ziph.write(os.path.join(root, file),basename(path))
