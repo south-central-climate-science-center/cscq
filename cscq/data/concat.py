@@ -1,7 +1,7 @@
 from celery.task import task
 from subprocess import call
 from dockertask import docker_task
-import os, requests
+import os, requests, zipfile
 import netCDF4 as nc
 @task()
 def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_web/sccsc_tasks'):
@@ -50,24 +50,27 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
                     result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd2,id=task_id)
                 
                 #Splice file to the correct merge point.
-                if outfile and outfile1:
-                    file3 = "%s/%s_%s-%s.nc" % (out_dir,"_".join(outfile1.split('_')[:-1]),"spliced",times1[-1])
-                    merge = merge_with_time(file1,file2)
-                    file4 = "%s/%s_%s-%s.nc" % (out_dir,"_".join(outfile1.split('_')[:-1]),times[0],times1[-1])
-                    if merge:
-                        docker_cmd3 = "%s %s" % (merge ,file3)
-                        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd3,id=task_id)
-                        docker_cmd4 = "ncrcat %s %s %s" % (file1,file3,file4)
-                        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd4,id=task_id)
-                    else:
-                        docker_cmd4 = "ncrcat %s %s %s" % (file1,file2,file4)
-                        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd4,id=task_id)
+                #if outfile and outfile1:
+                #    file3 = "%s/%s_%s-%s.nc" % (out_dir,"_".join(outfile1.split('_')[:-1]),"spliced",times1[-1])
+                #    merge = merge_with_time(file1,file2)
+                #    file4 = "%s/%s_%s-%s.nc" % (out_dir,"_".join(outfile1.split('_')[:-1]),times[0],times1[-1])
+                #    if merge:
+                #        docker_cmd3 = "%s %s" % (merge ,file3)
+                #        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd3,id=task_id)
+                #        docker_cmd4 = "ncrcat %s %s %s" % (file1,file3,file4)
+                #        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd4,id=task_id)
+                #    else:
+                #        docker_cmd4 = "ncrcat %s %s %s" % (file1,file2,file4)
+                #        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd4,id=task_id)
         except Exception as inst:
             e_file = open(out_dir + "/error.txt","w")
             e_file.write("%s%s" % ("Error: during files collection. Please see below for error description.\n\n",str(inst)))
             e_file.close()
-            raise
-    return "http://%s/sccsc_tasks/%s" % (result['host'],result['task_id'])
+            #raise
+    zipf = zipfile.ZipFile(os.path.join(base_output, task_id,'cmip5_download.zip'), 'w')
+    zipdir(resultDir, zipf)
+    zipf.close()
+    return "http://%s/sccsc_tasks/%s/cmip5_download.zip" % (result['host'],result['task_id'])
 
 def get_cmip5_metadata(parameter,domain,experiment,model,ensemble):
     # Web API Url
@@ -109,3 +112,9 @@ def merge_with_time(file1,file2):
         #return "ncea -F -d time,%d, %s"  % (idxvalue,file2) 
     except:
         return None
+
+def zipdir(path, ziph):
+    # ziph is zipfile handle
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            ziph.write(os.path.join(root, file))
