@@ -68,7 +68,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
             e_file.write("%s%s" % ("Error: during files collection. Please see below for error description.\n\n",str(inst)))
             e_file.close()
             #raise
-    zipf = zipfile.ZipFile(os.path.join(base_output, task_id,'cmip5_download.zip'), 'w')
+    zipf = zipfile.ZipFile(os.path.join(base_output, task_id,'cmip5_download.zip'), 'w',None,True)
     zipdir(resultDir, zipf)
     zipf.close()
     return "http://%s/sccsc_tasks/%s/cmip5_download.zip" % (result['host'],result['task_id'])
