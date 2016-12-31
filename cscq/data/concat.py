@@ -29,7 +29,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
         out_dir = "%s/%s/%s" % (resultDir,parameter,mdl)
         os.makedirs(out_dir)
         #Concatenate CMIP5 file
-        docker_opts = "-v /data:/data"
+        docker_opts = "-v /data:/data -v /data1:/data1 -v /data2:/data2"
         try:
             #Get CMIP5 Metadata
             if experiment =="historical":
