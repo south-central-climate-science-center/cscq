@@ -76,7 +76,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
 def get_cmip5_metadata(parameter,domain,experiment,model,ensemble):
     # Web API Url
     url = "http://data.southcentralclimate.org/api/catalog/data/catalog/cmip5_file/.json"
-    url_params ="?page_size=0&query={'spec':{'variable':'%s','domain':'%s','experiment':'%s','ensemble':'%s','model':'%s'},'$orderby':{'time':1}}"
+    url_params ="?page_size=0&query={'filter':{'variable':'%s','domain':'%s','experiment':'%s','ensemble':'%s','model':'%s'},'$orderby':{'time':1}}"
     url = "%s%s" % (url,url_params % (parameter,domain,experiment,ensemble,model))
     response =requests.get(url)
     data = response.json()
