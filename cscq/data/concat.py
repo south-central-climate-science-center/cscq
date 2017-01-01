@@ -79,6 +79,7 @@ def get_cmip5_metadata(parameter,domain,experiment,model,ensemble):
     url_params ="?page_size=0&query={'filter':{'variable':'%s','domain':'%s','experiment':'%s','ensemble':'%s','model':'%s'},'$orderby':{'time':1}}"
     url = "%s%s" % (url,url_params % (parameter,domain,experiment,ensemble,model))
     response =requests.get(url)
+    print(url,response.text)
     data = response.json()
     files=[]
     times=[]
@@ -93,6 +94,7 @@ def get_cmip5_metadata(parameter,domain,experiment,model,ensemble):
         filename="%s_%s-%s.nc" % ("_".join(filename.split('_')[:-1]),times[0],times[-1])
     except:
         filename=None
+    print(files,times,filename)
     return files,times,filename
 
 def merge_with_time(file1,file2):
