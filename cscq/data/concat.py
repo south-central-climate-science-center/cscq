@@ -26,7 +26,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     
     for mdl in model:
         #Make Model directory
-        out_dir = "%s/%s/%s" % (resultDir,parameter,mdl)
+        out_dir = "%s/%s/%s" % (resultDir,parameter,mdl.replace('(','-').replace(')',''))
         os.makedirs(out_dir)
         #Concatenate CMIP5 file
         docker_opts = "-v /data:/data -v /data1:/data1 -v /data2:/data2"
@@ -35,6 +35,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
             if experiment =="historical":
                 files,times,outfile= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
                 docker_cmd = "ncrcat %s %s" % (" ".join(files), "%s/%s" % (out_dir,outfile))
+                docker_cmd = docker_cmd.replace('(','-').replace(')','')
                 result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd,id=task_id)
             else:   
                 #Historical
@@ -42,12 +43,14 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
                 if outfile:
                     file1="%s/%s" % (out_dir,outfile)
                     docker_cmd1 = "ncrcat %s %s" % (" ".join(files),file1)
+                    docker_cmd1 = docker_cmd1.replace('(','-').replace(')','')
                     result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd1,id=task_id)
                 #RCP future projection
                 files1,times1,outfile1= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
                 if outfile1:
                     file2="%s/%s" % (out_dir,outfile1)
                     docker_cmd2 = "ncrcat %s %s" % (" ".join(files1),file2)
+                    docker_cmd2 = docker_cmd2.replace('(','-').replace(')','')
                     result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd2,id=task_id)
                 
                 #Splice file to the correct merge point.
