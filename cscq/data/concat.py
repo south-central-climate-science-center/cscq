@@ -4,16 +4,17 @@ from dockertask import docker_task
 import os, requests, zipfile
 import netCDF4 as nc
 from os.path import basename
+
 @task()
-def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_web/sccsc_tasks'):
+def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_web/sccsc_tasks',host="data.southcentralclimate.org"):
     """ 
     This task spins up a docker container. SSH key must be within celery worker.
     Args: 
         parameter - CMIP5 ESGF Parameter (eg. "tas")
-        domain - CMIP5 ESGF Domain (eg. "Amon" or "day")
-        experiment - CMIP5 ESGF Experiment (eg. "historical")
+        domain - CMIP5 ESGF Domain (eg. "mon" or "day")
+        experiment - CMIP5 ESGF Experiment (eg. ["historical"])
         model - CMIP5 ESGF List of Models (eg. ["GFDL-CM3"])
-        ensemble - CMIP5 ESGF Esemble (eg. "r1i1p1")
+        ensemble - CMIP5 ESGF List of Esemble (eg. ["r1i1p1"])
 
     """    
     #Task ID and result directory 
@@ -23,81 +24,69 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     result={}
     if isinstance(model,basestring):
         model = [model]
+    if isinstance(experiment,basestring):
+        experiment = [experiment]
+    if isinstance(ensemble,basestring):
+        ensemble = [ensemble]
     
     for mdl in model:
         #Make Model directory
         out_dir = "%s/%s/%s" % (resultDir,parameter,mdl.replace('(','-').replace(')',''))
         os.makedirs(out_dir)
+        #make netcdf header folder
+        os.makedirs("{0}/{1}".format(out_dir,"netcdf_header"))
         #Concatenate CMIP5 file
         docker_opts = "-v /data:/data -v /data1:/data1 -v /data2:/data2"
         try:
-            #Get CMIP5 Metadata
-            if experiment =="historical":
-                files,times,outfile= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
-                docker_cmd = "ncrcat %s %s" % (" ".join(files), "%s/%s" % (out_dir,outfile))
-                docker_cmd = docker_cmd.replace('(','-').replace(')','')
-                result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd,id=task_id)
-            else:   
-                #Historical
-                files,times,outfile= get_cmip5_metadata(parameter,domain,"historical",mdl,ensemble)
-                if outfile:
-                    file1="%s/%s" % (out_dir,outfile)
-                    docker_cmd1 = "ncrcat %s %s" % (" ".join(files),file1)
-                    docker_cmd1 = docker_cmd1.replace('(','-').replace(')','')
-                    result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd1,id=task_id)
-                #RCP future projection
-                files1,times1,outfile1= get_cmip5_metadata(parameter,domain,experiment,mdl,ensemble)
-                if outfile1:
-                    file2="%s/%s" % (out_dir,outfile1)
-                    docker_cmd2 = "ncrcat %s %s" % (" ".join(files1),file2)
-                    docker_cmd2 = docker_cmd2.replace('(','-').replace(')','')
-                    result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd2,id=task_id)
-                
-                #Splice file to the correct merge point.
-                #if outfile and outfile1:
-                #    file3 = "%s/%s_%s-%s.nc" % (out_dir,"_".join(outfile1.split('_')[:-1]),"spliced",times1[-1])
-                #    merge = merge_with_time(file1,file2)
-                #    file4 = "%s/%s_%s-%s.nc" % (out_dir,"_".join(outfile1.split('_')[:-1]),times[0],times1[-1])
-                #    if merge:
-                #        docker_cmd3 = "%s %s" % (merge ,file3)
-                #        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd3,id=task_id)
-                #        docker_cmd4 = "ncrcat %s %s %s" % (file1,file3,file4)
-                #        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd4,id=task_id)
-                #    else:
-                #        docker_cmd4 = "ncrcat %s %s %s" % (file1,file2,file4)
-                #        result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd4,id=task_id)
+            #Run all experiment and ensembles
+            for exp in experiment:
+                for ens in ensemble:
+                    try:
+                        files,times,outfile= get_cmip5_metadata(parameter,domain,exp,mdl,ens,host)
+                        if outfile:
+                            file1="{0}/{1}".format(out_dir,outfile)
+                            docker_cmd1 = "ncrcat %s %s" % (" ".join(files),file1)
+                            docker_cmd1 = docker_cmd1.replace('(','-').replace(')','')
+                            result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd1,id=task_id)
+                            #netcdf header
+                            file2="{0}/{1}/{2}.header.txt".format(out_dir,"netcdf_header",outfile)
+                            docker_cmd1 = "ncdump -h {0} > {1}".format(file1,file2)
+                            result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd1,id=task_id)
+                    except Exception as e:
+                        e_file = open("{0}/{1}_{2}_{3}_error.txt".format(out_dir,mdl,exp,ens),"w")
+                        e_file.write("{0}{1}".format("ERROR: While CMIP file collection. Please see below for error description.\n\n",str(inst)))
+                        e_file.close()
         except Exception as inst:
             e_file = open(out_dir + "/error.txt","w")
             e_file.write("%s%s" % ("Error: during files collection. Please see below for error description.\n\n",str(inst)))
             e_file.close()
-            #raise
-    zipf = zipfile.ZipFile(os.path.join(base_output, task_id,'cmip5_download.zip'), 'w',zipfile.ZIP_STORED,True)
-    zipdir(resultDir, zipf)
-    zipf.close()
-    return "http://%s/sccsc_tasks/%s/cmip5_download.zip" % (result['host'],result['task_id'])
+    return "http://{0}/sccsc_tasks/{1}/".format(host,task_id)
 
-def get_cmip5_metadata(parameter,domain,experiment,model,ensemble):
+def get_cmip5_metadata(parameter,domain,experiment,model,ensemble,host):
     # Web API Url
-    url = "http://data.southcentralclimate.org/api/catalog/data/catalog/cmip5_file/.json"
-    url_params ="?page_size=0&query={'filter':{'variable':'%s','domain':'%s','experiment':'%s','ensemble':'%s','model':'%s'},'sort':[('time',1)]}"
+    url = "http://{0}/api/catalog/data/catalog/cmip5_file/.json".format(host)
+    url_params ="?page_size=0&query={'filter':{'variable':'%s','domain':'%s','experiment':'%s','ensemble':'%s','model':'%s'},'sort':[('time',1),('version',-1)]}"
     url = "%s%s" % (url,url_params % (parameter,domain,experiment,ensemble,model))
     response =requests.get(url)
-    print(url,response.text)
     data = response.json()
     files=[]
     times=[]
     filename=None
+    version=None
     for row in data['results']:
-        filename=row['filename']
-        times.extend(row['time'].split('-'))
-        files.append(row['local_file'])
+        #only return latest version
+        if not version:
+            version=row['version']
+        if version==row['version']:
+            filename=row['filename']
+            times.extend(row['time'].split('-'))
+            files.append(row['local_file'])
     files.sort()
     times.sort()
     try:
-        filename="%s_%s-%s.nc" % ("_".join(filename.split('_')[:-1]),times[0],times[-1])
+        filename="%s_%s-%s.%s" % ("_".join(filename.split('_')[:-1]),times[0],times[-1],filename.split('.')[-1])
     except:
         filename=None
-    print(files,times,filename)
     return files,times,filename
 
 def merge_with_time(file1,file2):
