@@ -31,7 +31,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     
     for mdl in model:
         #Make Model directory
-        out_dir = "%s/%s/%s" % (resultDir,parameter,mdl.replace('(','-').replace(')',''))
+        out_dir = "%s/%s/%s/%s" % (resultDir,parameter,mdl.replace('(','-').replace(')',''),"netcdf_header")
         os.makedirs(out_dir)
         #make netcdf header folder
         #os.makedirs("{0}/{1}".format(out_dir,"netcdf_header"))
@@ -47,14 +47,14 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
                             file1="{0}/{1}".format(out_dir,outfile)
                             docker_cmd1 = "ncrcat %s %s" % (" ".join(files),file1)
                             docker_cmd1 = docker_cmd1.replace('(','-').replace(')','')
-                            file2="{0}/{1}.header.txt".format(out_dir,outfile)
-                            docker_cmd2 = "ncdump -h {0} > {1}".format(file1,file2)
-                            docker_cmd1 = "{0};{1}".format(docker_cmd1,docker_cmd2)
+                            #file2="{0}/{1}.header.txt".format(out_dir,outfile)
+                            #docker_cmd2 = "ncdump -h {0} > {1}".format(file1,file2)
+                            #docker_cmd1 = "{0};{1}".format(docker_cmd1,docker_cmd2)
                             result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd1,id=task_id)
                             #netcdf header
-                            #file2="{0}/{1}/{2}.header.txt".format(out_dir,"netcdf_header",outfile)
-                            #docker_cmd1 = "ncdump -h {0} > {1}".format(file1,file2)
-                            #result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd1,id=task_id)
+                            file2="{0}/{1}/{2}.header.txt".format(out_dir,"netcdf_header",outfile)
+                            docker_cmd1 = "ncdump -h {0} > {1}".format(file1,file2)
+                            result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd1,id=task_id)
                     except Exception as e:
                         e_file = open("{0}/{1}_{2}_{3}_error.txt".format(out_dir,mdl,exp,ens),"w")
                         e_file.write("{0}{1}".format("ERROR: While CMIP file collection. Please see below for error description.\n\n",str(e)))
