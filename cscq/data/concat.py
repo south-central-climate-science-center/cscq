@@ -33,6 +33,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
         #Make Model directory
         out_dir = "%s/%s/%s" % (resultDir,parameter,mdl.replace('(','-').replace(')',''))
         os.makedirs(out_dir)
+        os.chmod(out_dir,mode=0777)
         #make netcdf header folder
         os.makedirs("{0}/{1}".format(out_dir,"netcdf_header"))
         #Concatenate CMIP5 file
