@@ -36,7 +36,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
         #make netcdf header folder
         os.makedirs("{0}/{1}".format(out_dir,"netcdf_header"))
         #Concatenate CMIP5 file
-        docker_opts = "-v /data:/data -v /data1:/data1 -v /data2:/data2"
+        docker_opts = "-v /data:/data:z -v /data1:/data1:z -v /data2:/data2:z "
         try:
             #Run all experiment and ensembles
             for exp in experiment:
