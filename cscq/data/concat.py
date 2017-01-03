@@ -55,9 +55,9 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
                             #docker_cmd1 = "{0};{1}".format(docker_cmd1,docker_cmd2)
                             result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd1,id=task_id)
                             #netcdf header
-                            file2="{0}/{1}/{2}.header.txt".format(out_dir,"netcdf_header",outfile)
+                            file2="{0}/{1}/{2}_header.txt".format(out_dir,"netcdf_header",outfile.split('.')[0])
                             docker_cmd1 = "ncdump -h {0} > {1}".format(file1,file2)
-                            result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd1,id=task_id)
+                            result = docker_task(docker_name="sccsc/netcdf",docker_opts=docker_opts,docker_command=docker_cmd1,docker_run_args="-it --rm",id=task_id)
                     except Exception as e:
                         e_file = open("{0}/{1}_{2}_{3}_error.txt".format(out_dir,mdl,exp,ens),"w")
                         e_file.write("{0}{1}".format("ERROR: While CMIP file collection. Please see below for error description.\n\n",str(e)))
