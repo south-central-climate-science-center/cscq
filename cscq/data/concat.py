@@ -21,6 +21,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     task_id = str(ncrcat.request.id)
     resultDir = os.path.join(base_output, task_id,'cmip5')
     os.makedirs(resultDir)
+    os.chmod(resultDir,0777)
     result={}
     if isinstance(model,basestring):
         model = [model]
@@ -36,6 +37,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
         os.chmod(out_dir,0777)
         #make netcdf header folder
         os.makedirs("{0}/{1}".format(out_dir,"netcdf_header"))
+        os.chmod("{0}/{1}".format(out_dir,"netcdf_header"),0777)
         #Concatenate CMIP5 file
         docker_opts = "-v /data:/data:z -v /data1:/data1:z -v /data2:/data2:z "
         try:
