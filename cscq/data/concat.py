@@ -31,7 +31,7 @@ def ncrcat(parameter,domain,experiment,model,ensemble,base_output='/data/static_
     
     for mdl in model:
         #Make Model directory
-        out_dir = "%s/%s/%s/%s" % (resultDir,parameter,mdl.replace('(','-').replace(')',''))
+        out_dir = "%s/%s/%s" % (resultDir,parameter,mdl.replace('(','-').replace(')',''))
         os.makedirs(out_dir)
         #make netcdf header folder
         os.makedirs("{0}/{1}".format(out_dir,"netcdf_header"))
